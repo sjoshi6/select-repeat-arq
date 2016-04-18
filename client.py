@@ -103,13 +103,16 @@ def ack_handler(ack_recv_sock, lock, last_received_ack_p, final_sequence_no_p):
         ack_data = pickle.loads(data)
 
         with lock:
+
             last_received_ack = ack_data["header"]["ack_number"]
-            del sender_buffer[int(last_received_ack)]
+
+            if int(last_received_ack) in sender_buffer:
+                del sender_buffer[int(last_received_ack)]
 
             print("Received ack for packet " + str(last_received_ack))
 
         signal.alarm(0)
-        signal.setitimer(signal.ITIMER_REAL, 0.5)
+        signal.setitimer(signal.ITIMER_REAL, 2)
 
     # Close after while ends
     ack_recv_sock.close()
@@ -185,8 +188,8 @@ def main(lock, packets,final_sequence_no_p):
                     window_low = window_high+1
                     window_high += WINDOW_SIZE
 
-                    if window_high > final_sequence_no:
-                        window_high = final_sequence_no
+                    if window_high > int(final_sequence_no):
+                        window_high = int(final_sequence_no)
 
         # Send a fin packet at the end of file
         packet = {"header": {}}

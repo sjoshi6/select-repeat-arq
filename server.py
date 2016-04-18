@@ -3,12 +3,14 @@ import sys
 import pickle
 from random import uniform
 from settings import *
+import os
 
 SERVER_IP = "localhost"
 SERVER_PORT = ""
 FILE_NAME = ""
 PL_PROB = ""
 receiver_window = {}
+WINDOW_SIZE = ""
 
 
 def prob_random_generator():
@@ -72,22 +74,20 @@ def main(window_low, window_high, window_ptr, window_sizes):
             elif randm > PL_PROB:
                 if packet["header"]["fin"] == 1:
 
-                    print("Fin packet received; resetting expected_seq_no to 0")
-                    print("Using window size 512")
+                    print("Fin packet received")
+
+                    content_length = str(os.path.getsize("server_data/"+FILE_NAME))
+                    print("File transfer complete : File size "+ content_length)
+                    print("Clearing the file...")
+                    os.remove("server_data/"+FILE_NAME)
+
+                    print("Resetting expected_seq_no to 0")
+                    print("Using window size "+ str(WINDOW_SIZE))
+                    print("Ready for next iteration of file transfer...")
+
                     expected_seq_no = 0
                     window_low = 0
-                    window_high = 512 - 1
-                    # print("Using window size" + str(window_sizes[window_ptr]))
-                    #
-                    # expected_seq_no = 0
-                    # window_low = 0
-                    # window_high = window_sizes[window_ptr] - 1
-                    # window_ptr += 1
-                    #
-                    # if window_ptr == len(window_sizes):
-                    #     print("All window sizes finished")
-                    #     server_socket.close()
-                    #     sys.exit(0)
+                    window_high = WINDOW_SIZE - 1
 
                 elif packet["header"]["fin"] == 0:
                     if packet["header"]["checksum"] == generate_checksum(packet["data"]):
@@ -124,7 +124,16 @@ def main(window_low, window_high, window_ptr, window_sizes):
                                 window_high += 1
 
                         elif int(packet["header"]["sequence_number"]) < expected_seq_no:
+
                             print("Dropping the packet since it has already been ackd")
+
+                            ack = {"header": {}}
+                            ack["header"]["data_type"] = int('0101010101010101', 2)
+                            ack["header"]["bit_field"] = int('0000000000000000', 2)
+                            ack["header"]["ack_number"] = packet["header"]["sequence_number"]
+
+                            # Send the data and close this connection
+                            server_socket.sendto(pickle.dumps(ack), (client_ip, client_ack_port))
 
                         elif window_low < int(packet["header"]["sequence_number"]) <= window_high:
 
@@ -161,12 +170,13 @@ if __name__ == "__main__":
     SERVER_PORT = int(sys.argv[1])
     FILE_NAME = sys.argv[2]
     PL_PROB = float(sys.argv[3])
+    WINDOW_SIZE = int(sys.argv[4])
 
-    window_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
-    window_ptr = 0
-    window_low = 0
-    window_high = window_sizes[window_ptr] - 1
-    window_ptr += 1
-    window_size = 512
+    main(0, WINDOW_SIZE-1, -1, [])
+
+    # window_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    # window_ptr = 0
+    # window_low = 0
+    # window_high = window_sizes[window_ptr] - 1
+    # window_ptr += 1
     #main(window_low, window_high, window_ptr, window_sizes)
-    main(0, window_size -1, -1, [])
