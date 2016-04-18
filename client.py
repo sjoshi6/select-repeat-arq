@@ -16,6 +16,11 @@ sender_buffer = {}
 # Create a lock to share within threads main / ack handler
 lock = Lock()
 
+# Create a socket to connect to server
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+sock.bind(('', CLIENT_SEND_PORT))
+
 
 def read_file(file_name):
     file_byte_arr = []
@@ -101,11 +106,12 @@ def ack_handler(ack_recv_sock, lock, last_received_ack_p, final_sequence_no_p):
             last_received_ack = ack_data["header"]["ack_number"]
             del sender_buffer[int(last_received_ack)]
 
-            print(last_received_ack)
+            print("Received ack for packet " + str(last_received_ack))
 
         signal.alarm(0)
-        signal.setitimer(signal.ITIMER_REAL, 2)
+        signal.setitimer(signal.ITIMER_REAL, 0.5)
 
+    # Close after while ends
     ack_recv_sock.close()
 
 
@@ -117,8 +123,17 @@ def move_back(signum, frame):
 
     with lock:
         # Reset the last sent sequence number to the last acknowledged packet
-        signal.alarm(0)
-        signal.setitimer(signal.ITIMER_REAL, 2)
+        keylist = sender_buffer.keys()
+        keylist.sort()
+
+        for seq_num in keylist:
+            print("Retransmitting packet :"+ str(seq_num))
+            packet = sender_buffer[seq_num]
+            data = pickle.dumps(packet)
+            sock.sendto(data, (SERVER_IP, SERVER_PORT))
+
+    signal.alarm(0)
+    signal.setitimer(signal.ITIMER_REAL, 2)
 
 
 def main(lock, packets,final_sequence_no_p):
@@ -130,9 +145,6 @@ def main(lock, packets,final_sequence_no_p):
         global final_sequence_no, last_sent_sequence_number, next_sequence_number, last_ack_number, current_window_size
         global last_received_ack, finished
 
-        # Setting the timer for packet 1
-        signal.setitimer(signal.ITIMER_REAL, 2)
-
         finished = False
         last_sent_sequence_number = -1
         next_sequence_number = 0
@@ -140,39 +152,41 @@ def main(lock, packets,final_sequence_no_p):
         last_received_ack = -1
         final_sequence_no = final_sequence_no_p
 
-        # Create a socket to connect to server
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('', CLIENT_SEND_PORT))
-
         # Start the time when sending started
         start_time = time()
-
-        for i in range(0, WINDOW_SIZE):
-            packet = packets[i]
-            sender_buffer[int(packet["header"]["sequence_number"])] = packet
 
         # Unless we have reached the last packet
         while int(last_received_ack) < int(final_sequence_no):
 
-            with lock:
-                if len(sender_buffer) == 0:
-                    window_low = window_high+1
-                    window_high += WINDOW_SIZE
+            if len(sender_buffer) == 0:
+
+                with lock:
+                    # Reset timer for each buffer frame
+                    signal.setitimer(signal.ITIMER_REAL, 2)
 
                     for i in range(window_low, window_high+1):
 
-                        print("Adding packets into buffer "+str(window_low)+"  "+ str(window_high+1))
+                        print("Adding packet into buffer "+str(i))
                         packet = packets[i]
                         sender_buffer[int(packet["header"]["sequence_number"])] = packet
 
-                keylist = sender_buffer.keys()
-                keylist.sort()
+                    keylist = sender_buffer.keys()
+                    keylist.sort()
 
-                for seq_num in keylist:
-                    packet = sender_buffer[seq_num]
-                    data = pickle.dumps(packet)
-                    sock.sendto(data, (SERVER_IP, SERVER_PORT))
+                    print(keylist)
+
+                    for seq_num in keylist:
+                        print("Sending packet : "+str(seq_num))
+
+                        packet = sender_buffer[seq_num]
+                        data = pickle.dumps(packet)
+                        sock.sendto(data, (SERVER_IP, SERVER_PORT))
+
+                    window_low = window_high+1
+                    window_high += WINDOW_SIZE
+
+                    if window_high > final_sequence_no:
+                        window_high = final_sequence_no
 
         # Send a fin packet at the end of file
         packet = {"header": {}}
@@ -184,6 +198,8 @@ def main(lock, packets,final_sequence_no_p):
 
         data = pickle.dumps(packet)
         sock.sendto(data,(SERVER_IP, SERVER_PORT))
+
+        print("Finished sending the full file")
 
         # Record time when process ended
         end_time = time()
