@@ -10,6 +10,7 @@ FILE_NAME = ""
 PL_PROB = ""
 receiver_window = {}
 
+
 def prob_random_generator():
 
     result = uniform(0, 1)
@@ -43,7 +44,7 @@ def generate_checksum(msg):
     return ~sumation & 0xffff
 
 
-def main(window_low, window_high):
+def main(window_low, window_high, window_ptr, window_sizes):
 
     expected_seq_no = 0
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -72,7 +73,21 @@ def main(window_low, window_high):
                 if packet["header"]["fin"] == 1:
 
                     print("Fin packet received; resetting expected_seq_no to 0")
+                    print("Using window size 512")
                     expected_seq_no = 0
+                    window_low = 0
+                    window_high = 512 - 1
+                    # print("Using window size" + str(window_sizes[window_ptr]))
+                    #
+                    # expected_seq_no = 0
+                    # window_low = 0
+                    # window_high = window_sizes[window_ptr] - 1
+                    # window_ptr += 1
+                    #
+                    # if window_ptr == len(window_sizes):
+                    #     print("All window sizes finished")
+                    #     server_socket.close()
+                    #     sys.exit(0)
 
                 elif packet["header"]["fin"] == 0:
                     if packet["header"]["checksum"] == generate_checksum(packet["data"]):
@@ -125,8 +140,7 @@ def main(window_low, window_high):
                             server_socket.sendto(pickle.dumps(ack), (client_ip, client_ack_port))
 
                         else:
-                            print("Packet with unexpected sequence number receiver -- out of order / duplicate packet")
-                            print("\n")
+                            print("Packet out side of window received")
 
                     else:
                         print("Packet is discarded due to incorrect checksum value")
@@ -147,5 +161,12 @@ if __name__ == "__main__":
     SERVER_PORT = int(sys.argv[1])
     FILE_NAME = sys.argv[2]
     PL_PROB = float(sys.argv[3])
-    WINDOW_SIZE = int(sys.argv[4])
-    main(0, WINDOW_SIZE-1)
+
+    window_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    window_ptr = 0
+    window_low = 0
+    window_high = window_sizes[window_ptr] - 1
+    window_ptr += 1
+    window_size = 512
+    #main(window_low, window_high, window_ptr, window_sizes)
+    main(0, window_size -1, -1, [])
