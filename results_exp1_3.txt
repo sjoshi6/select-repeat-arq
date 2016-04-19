@@ -1,0 +1,55 @@
+#--------------------------#
+MSS is 500
+Window size is 1
+Time for file Transfer = 67.4210579395
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 2
+Time for file Transfer = 57.3705010414
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 4
+Time for file Transfer = 45.5744738579
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 8
+Time for file Transfer = 29.4121780396
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 16
+Time for file Transfer = 40.5719549656
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 32
+Time for file Transfer = 34.1626319885
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 64
+Time for file Transfer = 43.666741848
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 128
+Time for file Transfer = 33.7652258873
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 256
+Time for file Transfer = 25.5887029171
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 512
+Time for file Transfer = 21.6631360054
+#--------------------------#
+#--------------------------#
+MSS is 500
+Window size is 1024
+Time for file Transfer = 21.9109351635
+#--------------------------#
