@@ -27,7 +27,7 @@ python client.py SERVER_IP SERVER_PORT FILE_TO_BE_SENT WINDOW_SIZE MSS CLIENT_IP
 ```
 ###### Enter the values for SERVER IP , SERVER PORT and CLIENT IP
 
-### Initiate the server process as follows
+
 
 
 
