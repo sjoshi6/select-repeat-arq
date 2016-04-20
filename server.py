@@ -5,13 +5,12 @@ from random import uniform
 from settings import *
 import os
 
-SERVER_IP = "localhost"
+SERVER_IP = ""
 SERVER_PORT = ""
 FILE_NAME = ""
 PL_PROB = ""
 receiver_window = {}
 WINDOW_SIZE = ""
-
 
 def prob_random_generator():
 
@@ -167,10 +166,11 @@ def main(window_low, window_high, window_ptr, window_sizes):
 
 if __name__ == "__main__":
 
-    SERVER_PORT = int(sys.argv[1])
-    FILE_NAME = sys.argv[2]
-    PL_PROB = float(sys.argv[3])
-    WINDOW_SIZE = int(sys.argv[4])
+    SERVER_IP = sys.argv[1]
+    SERVER_PORT = int(sys.argv[2])
+    FILE_NAME = sys.argv[3]
+    PL_PROB = float(sys.argv[4])
+    WINDOW_SIZE = int(sys.argv[5])
 
     main(0, WINDOW_SIZE-1, -1, [])
 
