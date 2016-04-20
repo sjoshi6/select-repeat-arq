@@ -33,6 +33,8 @@ python client.py SERVER_IP SERVER_PORT FILE_TO_BE_SENT WINDOW_SIZE MSS CLIENT_IP
 
 - Enter the values for SERVER IP , SERVER PORT and CLIENT IP
 
+----------------
+Results and graphs can be found in the file in this folder -->  project2-selective-repeat.pdf
 
 
 
